@@ -4,7 +4,8 @@ class AuthenticatedGenerator < Rails::Generator::NamedBase
   default_options :skip_migration => false,
                   :skip_routes    => false,
                   :old_passwords  => false,
-                  :include_activation => false
+                  :include_activation => false, 
+                  :use_email_as_login => false
 
   attr_reader   :controller_name,
                 :controller_class_path,
@@ -331,6 +332,47 @@ class AuthenticatedGenerator < Rails::Generator::NamedBase
     options[:rspec] ||= (File.exist?(spec_dir) && File.directory?(spec_dir)) unless (options[:rspec] == false)
   end
 
+  # tell if we are using email as login
+  def email_as_login?
+    options[:use_email_as_login]
+  end
+  
+  # should return email or login based on the options received
+  def email_or_login
+    if email_as_login?
+	    :email
+    else
+    	:login
+    end		
+  end
+  
+  # returns the correct value to use in the tests to compare with the fixtures
+  def quentin_email_or_login
+	  if email_as_login?
+		  "'quentin@example.com'"
+	  else	
+		  "'quentin'"
+	  end	
+  end
+
+  # returns the correct value to use in the tests to compare with the fixtures
+  def quentin_changed_email_or_login
+	  if email_as_login?
+		  "'quentin2@example.com'"
+	  else	
+		  "'quentin2'"
+	  end	
+  end
+
+  # returns the correct value to use in the tests to compare with the fixtures
+  def aaron_email_or_login
+	  if email_as_login?
+		  "'aaron@example.com'"
+	  else	
+		  "'aaron'"
+	  end	
+  end
+
   #
   # !! These must match the corresponding routines in by_password.rb !!
   #
@@ -402,6 +444,8 @@ protected
       "Use the older password encryption scheme (see README)")    { |v| options[:old_passwords] = v }
     opt.on("--dump-generator-attrs",
       "(generator debug helper)")                                 { |v| options[:dump_generator_attribute_names] = v }
+    opt.on("--use-email-as-login",
+           "Will remove all instances of login in the generated files and require email for logging in") { |v| options[:use_email_as_login] = v }
   end
 
   def dump_generator_attribute_names

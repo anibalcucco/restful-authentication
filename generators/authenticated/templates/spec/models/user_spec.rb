@@ -38,12 +38,14 @@ describe <%= class_name %> do
   # Validations
   #
 
+  <% unless email_as_login? %>
   it 'requires login' do
     lambda do
       u = create_<%= file_name %>(:login => nil)
       u.errors.on(:login).should_not be_nil
     end.should_not change(<%= class_name %>, :count)
   end
+  <% end %>
 
   describe 'allows legitimate logins:' do
     ['123', '1234567890_234567890_234567890_234567890',
@@ -147,12 +149,12 @@ describe <%= class_name %> do
 
   it 'resets password' do
     <%= table_name %>(:quentin).update_attributes(:password => 'new password', :password_confirmation => 'new password')
-    <%= class_name %>.authenticate('quentin', 'new password').should == <%= table_name %>(:quentin)
+    <%= class_name %>.authenticate(<%= quentin_email_or_login %>, 'new password').should == <%= table_name %>(:quentin)
   end
 
   it 'does not rehash password' do
-    <%= table_name %>(:quentin).update_attributes(:login => 'quentin2')
-    <%= class_name %>.authenticate('quentin2', 'monkey').should == <%= table_name %>(:quentin)
+    <%= table_name %>(:quentin).update_attributes(:<%= email_or_login %> => <%= quentin_changed_email_or_login %>)
+    <%= class_name %>.authenticate(<%= quentin_changed_email_or_login %>, 'monkey').should == <%= table_name %>(:quentin)
   end
 
   #
@@ -160,7 +162,7 @@ describe <%= class_name %> do
   #
 
   it 'authenticates <%= file_name %>' do
-    <%= class_name %>.authenticate('quentin', 'monkey').should == <%= table_name %>(:quentin)
+    <%= class_name %>.authenticate(<%= quentin_email_or_login %>, 'monkey').should == <%= table_name %>(:quentin)
   end
 
   it "doesn't authenticate <%= file_name %> with bad password" do
@@ -245,7 +247,7 @@ describe <%= class_name %> do
 
   it 'does not authenticate suspended <%= file_name %>' do
     <%= table_name %>(:quentin).suspend!
-    <%= class_name %>.authenticate('quentin', 'monkey').should_not == <%= table_name %>(:quentin)
+    <%= class_name %>.authenticate(<%= quentin_email_or_login %>, 'monkey').should_not == <%= table_name %>(:quentin)
   end
 
   it 'deletes <%= file_name %>' do
@@ -283,7 +285,7 @@ describe <%= class_name %> do
 <% end %>
 protected
   def create_<%= file_name %>(options = {})
-    record = <%= class_name %>.new({ :login => 'quire', :email => 'quire@example.com', :password => 'quire69', :password_confirmation => 'quire69' }.merge(options))
+    record = <%= class_name %>.new({ <% if !email_as_login? %>:login => 'quire', <% end %>:email => 'quire@example.com', :password => 'quire69', :password_confirmation => 'quire69' }.merge(options))
     record.<% if options[:stateful] %>register! if record.valid?<% else %>save<% end %>
     record
   end
